@@ -23,7 +23,7 @@
   &nbsp;
   <input type="button" class="button" value="Remove all" onclick="removeAll()" />
   &nbsp;
-  <input type="button" class="button" value="Remove all" onclick="stopAll()" />
+  <input type="button" class="button" value="Stop all" onclick="stopAll()" />
   <br>
   <form>
   <ul class="form-style-1">
@@ -202,7 +202,7 @@ function removeAll() {
   });
 }
 
-function removeAll() {
+function stopAll() {
   $.get("/kafka2bq/stop/{{ id }}", function(data){
     $(".modal-body").html("All workers have been stopped. ");
     $("#btnClose").on('click',function(){

@@ -511,6 +511,7 @@ def restartclient(server, port, group, topic, clientid):
                 o.clientId = item.clientId
                 o.process = proc
                 o.configuration = item.configuration
+                o.table = item.table
                 o.status = 1
                 print("New instance PID: " + str(o.pid))
                 processes.append(o)
@@ -553,6 +554,7 @@ def restartclientbyid(id, clientid):
                 o.clientId = item.clientId
                 o.process = proc
                 o.configuration = item.configuration
+                o.table = item.table
                 o.status = 1
                 print("New instance PID: " + str(o.pid))
                 processes.append(o)
