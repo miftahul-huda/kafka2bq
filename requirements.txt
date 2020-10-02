@@ -1,0 +1,4 @@
+confluent_kafka==1.5.0
+Flask==1.1.2
+numpy==1.16.6
+protobuf==3.13.0
