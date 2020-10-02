@@ -141,23 +141,23 @@ class KafkaConsumer:
 
     def save(self,  config):
         if(len(self.buffer) > 0):
-            print("Saving to " + config.outputBqTable)
+            print(config.clientId +  " : Saving to " + config.outputBqTable)
             startTime = datetime.now()
             #self.print_all(self.buffer)
             errors = self.save_data(self.buffer, config)
             errors = []
-            print("Total rows  : " + str(len( self.buffer )))
+            print(config.clientId +  " :Total rows  : " + str(len( self.buffer )))
 
             if(len(errors) == 0):
                 self.messageCounter = 0
                 self.buffer = []
                 endtime = datetime.now()
-                print("Data has been saved in " + str(endtime - startTime))
+                print(config.clientId +  " : Data has been saved in " + str(endtime - startTime))
                 print("\n\n")
             else:
-                print("Error saving to BigQuery")
+                print(config.clientId +  " : Error saving to BigQuery")
                 print(errors)
-                print("Waiting for 3 seconds...")
+                print(config.clientId +  " : Waiting for 3 seconds...")
                 time.sleep(3)
 
     def print_all(self, arr):
@@ -194,15 +194,15 @@ class KafkaConsumer:
                     continue
                 elif not msg.error():
                     #dt_object = datetime.fromtimestamp(float(msg.timestamp()))
-                    print('Received message at: {0}'.format(msg.timestamp()))
+                    print(config.clientId +  ' : Received message at: {0}'.format(msg.timestamp()))
                     #print(msg.value())
                     self.process_to_bq(msg.value(), config)
 
                 elif msg.error().code() == KafkaError._PARTITION_EOF:
-                    print('End of partition reached {0}/{1}'
+                    print(config.clientId +  ' : End of partition reached {0}/{1}'
                           .format(msg.topic(), msg.partition()))
                 else:
-                    print('Error occured: {0}'.format(msg.error().str()))
+                    print(config.clientId +  ' :Error occured: {0}'.format(msg.error().str()))
 
         except KeyboardInterrupt:
             pass
@@ -219,12 +219,10 @@ class KafkaConsumer:
         print("====================================")
         print("Kafka bootstrap : " + o.bootstrapServer )
         print("Kafka Topic : " + o.kafkaTopic )
-        print("Topic partition : " + str(o.partition) )
         print("Client Group : " + o.groupId )
         print("Client id : " + o.clientId )
         print("BigQuery table : " + o.outputBqTable )
         print("====================================")
-        print("Starting Kafka to BigQuery...")
         self.process(o)
 
 if __name__ == "__main__":

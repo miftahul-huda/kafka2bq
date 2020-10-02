@@ -21,7 +21,9 @@
   <br><br>
   <input type="button" class="button" value="Back" onclick="location='/web'" />
   &nbsp;
-  <input type="button" class="button" value="Stop all" onclick="stopAll()" />
+  <input type="button" class="button" value="Remove all" onclick="removeAll()" />
+  &nbsp;
+  <input type="button" class="button" value="Remove all" onclick="stopAll()" />
   <br>
   <form>
   <ul class="form-style-1">
@@ -59,6 +61,7 @@
                 <th>Worker ID</th>
                 <th>PID</th>
                 <th>Status</th>
+                <th></th>
                 <th></th>
             </tr>
         </thead>
@@ -116,6 +119,8 @@ function load(callback){
 
       for(var  i  =  0;  i < data.workers.length; i++)
       {
+        var stoplink  ="<a href='javascript:void()' onclick='stopWorker(\"" + data.workers[i].clientId + "\", \"" + data.workers[i].id + "\")'>Stop</a>"
+ 
         var link  ="<a href='javascript:void()' onclick='removeWorker(\"" + data.workers[i].clientId + "\", \"" + data.workers[i].id + "\")'>Remove</a>"
         var restart ="(<a href='javascript:void()' onclick='restartWorker(\"" + data.workers[i].clientId + "\", \"" + data.workers[i].id + "\")'>Restart</a>)"
         if(data.workers[i].status == 1)
@@ -123,6 +128,7 @@ function load(callback){
         else
             data.workers[i].statusDisplay = "Dead " + restart
 
+        data.workers[i].stopLink  =  stoplink;
         data.workers[i].link  =  link;
       }
 
@@ -132,6 +138,7 @@ function load(callback){
                 { "data": "clientId" },
                 { "data": "pid" },
                 { "data": "statusDisplay" },
+                { "data": "stopLink" },
                 { "data": "link" }
             ]
         } );
@@ -146,6 +153,13 @@ function load(callback){
 }
 
 function removeWorker(clientId, id){
+  $.get("/kafka2bq/remove/" +  id  + "/" + clientId, function(data){
+    console.log(data);
+    load();
+  });
+}
+
+function stopWorker(clientId, id){
   $.get("/kafka2bq/stop/" +  id  + "/" + clientId, function(data){
     console.log(data);
     load();
@@ -177,9 +191,20 @@ function addWorker()
   });
 }
 
-function stopAll() {
+function removeAll() {
+  $.get("/kafka2bq/remove/{{ id }}", function(data){
+    $(".modal-body").html("All workers have been removed. Session is ended.");
+    $("#btnClose").on('click',function(){
+        location = "/web";
+    });
+    $("#myModal").modal();
+    //
+  });
+}
+
+function removeAll() {
   $.get("/kafka2bq/stop/{{ id }}", function(data){
-    $(".modal-body").html("All workers have been stopped. Session is ended.");
+    $(".modal-body").html("All workers have been stopped. ");
     $("#btnClose").on('click',function(){
         location = "/web";
     });

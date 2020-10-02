@@ -10,14 +10,70 @@ import thread
 import copy
 from subprocess import PIPE
 from flask import render_template
-
+import traceback 
 from flask import request, jsonify
+import time
+import atexit
 
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
 
 host = '0.0.0.0'
 port = 5555
+
+processes = []
+
+def save_processes_to_file():
+    ss = json.dumps(processes, default=obj_dict)
+    f = open("sessions.log", "w")
+    f.write(ss)
+    f.close()
+
+def load_process_from_file():
+    global processes
+    processes = []
+    if os.path.isfile("sessions.log"):
+        f = open("sessions.log", "r")
+        ss = f.read()
+        processes2 = json.loads(ss)
+        for item in processes2:
+            o = convert_to_process(item)
+            processes.append(o)
+        
+        reload_process()
+
+def convert_to_process(item):
+    o = lambda: None
+    o.id = item["id"].replace("\n",  "")
+    o.pid = item["pid"]
+    o.folder = item["folder"]
+    o.file = item["file"]
+    o.clientId = item["clientId"]
+    o.process = None
+    o.status = 0
+    o.table = item["table"]
+    o.configuration = item["configuration"]  
+    return o 
+
+def reload_process():
+    global processes
+    for item in processes:
+        print("Creating process for " + item.file)
+        proc = subprocess.Popen(["python", "kafka2bq.py", "-f" + item.file])
+        item.process = proc
+        item.pid = proc.pid
+        print("Done, PID : " + str(item.pid))
+        time.sleep(2)
+    
+    save_processes_to_file()
+
+def stop_all_process():
+    global processes
+    for item in processes:
+        print("Kill process for " + item.file)
+        os.kill(item.pid, signal.SIGTERM) #or signal.SIGKIL
+    
+    save_processes_to_file()
 
 
 def check_processes(name, num):
@@ -29,9 +85,10 @@ def check_processes(name, num):
             print("Readline")
             text = proc.stdout.read()
             print(item.clientId + " : " + text)
-        except Exception, e:
+        except:
             print("Error  check_processes")
-            print(e)
+            traceback.print_exc() 
+
 
 def get_random_string(length):
     letters = string.ascii_lowercase
@@ -97,7 +154,16 @@ def parse_folder(folder):
     ss  = ss[1]
     ssss  =  ss.split("_")
     group  =  ssss[0]
-    topic = ssss[1]
+
+    c = 0
+    topic = ""
+    for sitem in ssss:
+        if c > 0:
+            topic = topic + ssss[c]  + "_"
+        c = c + 1
+    
+    if len(topic) > 0:
+        topic = topic[:-1]
 
     return [host, port, group, topic]
 
@@ -125,7 +191,7 @@ def new():
 def view(id):
     return render_template('view.html', id=id)
 
-processes = []
+
 @app.route('/kafka2bq/start/<server>/<port>/<group>/<topic>/<project>/<table>/<num>/<credential>', methods=['GET'])
 def start(server, port, group, topic, project, table, num, credential):
     info = []
@@ -158,7 +224,6 @@ def start(server, port, group, topic, project, table, num, credential):
         f = open(file, "wt")
         f.write(ss)
         f.close()
-
 
         if check_exists(processes, file)  == True:
             print("\n\nConsumer " + file + " Exists!\nRestarting...\n")
@@ -200,6 +265,7 @@ def start(server, port, group, topic, project, table, num, credential):
        print "Error: unable to start thread"
        print(e)"""
 
+    save_processes_to_file()
     sjson = json.dumps(info, default=obj_dict)
     return sjson
 
@@ -250,7 +316,7 @@ def addclients(server, port, group, topic, num):
         #info = info + o.clientId + ", PID: " + str(o.pid) +"\n"
         info.append(o)
 
-
+    save_processes_to_file()
     sjson = json.dumps(info, default=obj_dict)
     return sjson
 
@@ -300,7 +366,7 @@ def addclientsbyid(id, num):
         #info = info + o.clientId + ", PID: " + str(o.pid) +"\n"
         info.append(o)
 
-
+    save_processes_to_file()
     sjson = json.dumps(info, default=obj_dict)
     return sjson
 
@@ -426,6 +492,7 @@ def restartclient(server, port, group, topic, clientid):
             info = o
             break
 
+    save_processes_to_file()
     sjson = json.dumps(info, default=obj_dict)
     return sjson
 
@@ -461,12 +528,13 @@ def restartclientbyid(id, clientid):
             processes.append(o)
             info = o
             break
-
+    
+    save_processes_to_file()
     sjson = json.dumps(info, default=obj_dict)
     return sjson
 
-@app.route('/kafka2bq/stop/<server>/<port>/<group>/<topic>/<clientid>', methods=['GET'])
-def stopclient(server, port, group, topic, clientid):
+@app.route('/kafka2bq/remove/<server>/<port>/<group>/<topic>/<clientid>', methods=['GET'])
+def removeclient(server, port, group, topic, clientid):
     info = []
     folder = server + "_" + port + "/" + group + "_" + topic
     for item in processes:
@@ -484,6 +552,29 @@ def stopclient(server, port, group, topic, clientid):
             info = item
             break
 
+    save_processes_to_file()
+    sjson = json.dumps(info, default=obj_dict)
+    return sjson
+
+@app.route('/kafka2bq/remove/<id>/<clientid>', methods=['GET'])
+def removeclientbyid(id, clientid):
+    info = []
+    folder =  base64.decodestring(id);
+    for item in processes:
+        print (item.clientId + " === " + clientid)
+        if item.clientId == clientid:
+            pid =  item.pid
+            try:
+                print("\n\nKill " + str(pid))
+                os.kill(pid, signal.SIGTERM) #or signal.SIGKILL
+            except:
+                print("Already killed")
+            remove(processes, item.file)
+            item.status  =  0
+            info = item
+            break
+    
+    save_processes_to_file()
     sjson = json.dumps(info, default=obj_dict)
     return sjson
 
@@ -500,16 +591,17 @@ def stopclientbyid(id, clientid):
                 os.kill(pid, signal.SIGTERM) #or signal.SIGKILL
             except:
                 print("Already killed")
-            remove(processes, item.file)
+
             item.status  =  0
             info = item
             break
-
+    
+    save_processes_to_file()
     sjson = json.dumps(info, default=obj_dict)
     return sjson
 
-@app.route('/kafka2bq/stop/<server>/<port>/<group>/<topic>', methods=['GET'])
-def stopallgrouptopicclient(server, port, group, topic):
+@app.route('/kafka2bq/remove/<server>/<port>/<group>/<topic>', methods=['GET'])
+def removellgrouptopicclient(server, port, group, topic):
     info = []
     removed  = []
     folder = server + "_" + port + "/" + group + "_" + topic
@@ -531,11 +623,12 @@ def stopallgrouptopicclient(server, port, group, topic):
     for item in removed:
         remove(processes, item.file)
 
+    save_processes_to_file()
     sjson = json.dumps(info, default=obj_dict)
     return sjson
 
-@app.route('/kafka2bq/stop/<id>', methods=['GET'])
-def stopallbyid(id):
+@app.route('/kafka2bq/remove/<id>', methods=['GET'])
+def removeallbyid(id):
     info = []
     removed  = []
     folder = base64.decodestring(id)
@@ -557,9 +650,42 @@ def stopallbyid(id):
     for item in removed:
         remove(processes, item.file)
 
+    save_processes_to_file()
+    sjson = json.dumps(info, default=obj_dict)
+    return sjson
+
+@app.route('/kafka2bq/stop/<id>', methods=['GET'])
+def stopallbyid(id):
+    info = []
+    removed  = []
+    folder = base64.decodestring(id)
+
+    for item in processes:
+        print(item.folder + " == " + folder)
+        if item.folder == folder:
+            pid =  item.pid
+            try:
+                print("\n\nKill " + str(pid))
+                os.kill(pid, signal.SIGTERM) #or signal.SIGKILL
+            except:
+                print("Already killed")
+
+            item.status  =  0
+            info.append(item)
+
+    for item in removed:
+        remove(processes, item.file)
+
+    save_processes_to_file()
     sjson = json.dumps(info, default=obj_dict)
     return sjson
 
 
+load_process_from_file()
+
+atexit.register(stop_all_process)
+
 print("Running kafka2bq server on " + host + ":"  + str(port))
-app.run(host, port)
+app.run(host, port, debug=True, use_reloader=False)
+
+
