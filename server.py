@@ -58,20 +58,28 @@ def convert_to_process(item):
 def reload_process():
     global processes
     for item in processes:
-        print("Creating process for " + item.file)
-        proc = subprocess.Popen(["python", "kafka2bq.py", "-f" + item.file])
-        item.process = proc
-        item.pid = proc.pid
-        print("Done, PID : " + str(item.pid))
-        time.sleep(2)
+        try:
+            print("Creating process for " + item.file)
+            proc = subprocess.Popen(["python", "kafka2bq.py", "-f" + item.file])
+            item.process = proc
+            item.pid = proc.pid
+            print("Done, PID : " + str(item.pid))
+            time.sleep(2)
+        except :
+            print("Fail to create process")
+            traceback.print_exc() 
     
     save_processes_to_file()
 
 def stop_all_process():
     global processes
     for item in processes:
-        print("Kill process for " + item.file)
-        os.kill(item.pid, signal.SIGTERM) #or signal.SIGKIL
+        try:
+            print("Kill process for " + item.file)
+            os.kill(item.pid, signal.SIGTERM) #or signal.SIGKIL
+        except :
+            print("Already killed")
+
     
     save_processes_to_file()
 
@@ -237,27 +245,31 @@ def start(server, port, group, topic, project, table, num, credential):
 
             remove(processes, file)
 
-        print("Starting " + file)
-        proc = subprocess.Popen(["python", "kafka2bq.py", "-f" + file])
-        print("proc")
-        print(proc)
-        o = lambda: None
-        o.id = id.replace("\n",  "")
-        o.pid = proc.pid
-        o.folder = folder
-        o.file = file
-        o.clientId = clientId
-        o.process = proc
-        o.status = 1
-        o.table = table
+        try:
+            print("Starting " + file)
+            proc = subprocess.Popen(["python", "kafka2bq.py", "-f" + file])
+            print("proc")
+            print(proc)
+            o = lambda: None
+            o.id = id.replace("\n",  "")
+            o.pid = proc.pid
+            o.folder = folder
+            o.file = file
+            o.clientId = clientId
+            o.process = proc
+            o.status = 1
+            o.table = table
 
-        o.configuration = s
+            o.configuration = s
 
-        processes.append(o)
-        print("File "  + file + ", PID : " + str(o.pid))
-        #info = info + o.clientId + ", PID: " + str(o.pid) +"\n"
+            processes.append(o)
+            print("File "  + file + ", PID : " + str(o.pid))
+            #info = info + o.clientId + ", PID: " + str(o.pid) +"\n"
 
-        info.append(o)
+            info.append(o)
+        except:
+            print("Fail to create process")
+            traceback.print_exc()
 
     """try:
        thread.start_new_thread( check_processes, ("Thread-1", 2, ))
@@ -291,30 +303,36 @@ def addclients(server, port, group, topic, num):
     s = itemtemplate.configuration
 
     for i in range(start, end):
-        clientId = 'Client-' + + get_random_number(5)
-        ss  = s.replace('<clientId>', clientId)
-        file = folder + "/" + clientId + '.conf'
-        f = open(file, "wt")
-        f.write(ss)
-        f.close()
 
-        print("Starting " + file)
-        proc = subprocess.Popen(["python", "kafka2bq.py", "-f" + file])
+        try:
+            clientId = 'Client-' + + get_random_number(5)
+            ss  = s.replace('<clientId>', clientId)
+            file = folder + "/" + clientId + '.conf'
+            f = open(file, "wt")
+            f.write(ss)
+            f.close()
 
-        o = lambda: None
-        o.id = id.replace("\n",  "")
-        o.pid = proc.pid
-        o.folder = folder
-        o.file = file
-        o.clientId = clientId
-        o.process = proc
-        o.configuration = s
-        o.status = 1
-        o.table = itemtemplate.table
-        processes.append(o)
-        print("File "  + file + ", PID : " + str(o.pid))
-        #info = info + o.clientId + ", PID: " + str(o.pid) +"\n"
-        info.append(o)
+            print("Starting " + file)
+            proc = subprocess.Popen(["python", "kafka2bq.py", "-f" + file])
+
+            o = lambda: None
+            o.id = id.replace("\n",  "")
+            o.pid = proc.pid
+            o.folder = folder
+            o.file = file
+            o.clientId = clientId
+            o.process = proc
+            o.configuration = s
+            o.status = 1
+            o.table = itemtemplate.table
+            processes.append(o)
+            print("File "  + file + ", PID : " + str(o.pid))
+            #info = info + o.clientId + ", PID: " + str(o.pid) +"\n"
+            info.append(o)
+        except:
+            print("Fail creating consumer")
+            traceback.print_exc()
+
 
     save_processes_to_file()
     sjson = json.dumps(info, default=obj_dict)
@@ -341,30 +359,36 @@ def addclientsbyid(id, num):
     s = itemtemplate.configuration
 
     for i in range(start, end):
-        clientId = 'Client-' + get_random_number(5)
-        ss  = s.replace('<clientId>', clientId)
-        file = folder + "/" + clientId + '.conf'
-        f = open(file, "wt")
-        f.write(ss)
-        f.close()
 
-        print("Starting " + file)
-        proc = subprocess.Popen(["python", "kafka2bq.py", "-f" + file])
+        try:
+            clientId = 'Client-' + get_random_number(5)
+            ss  = s.replace('<clientId>', clientId)
+            file = folder + "/" + clientId + '.conf'
+            f = open(file, "wt")
+            f.write(ss)
+            f.close()
 
-        o = lambda: None
-        o.id = id.replace("\n",  "")
-        o.pid = proc.pid
-        o.folder = folder
-        o.file = file
-        o.clientId = clientId
-        o.process = proc
-        o.configuration = s
-        o.status = 1
-        o.table = itemtemplate.table
-        processes.append(o)
-        print("File "  + file + ", PID : " + str(o.pid))
-        #info = info + o.clientId + ", PID: " + str(o.pid) +"\n"
-        info.append(o)
+            print("Starting " + file)
+            proc = subprocess.Popen(["python", "kafka2bq.py", "-f" + file])
+
+            o = lambda: None
+            o.id = id.replace("\n",  "")
+            o.pid = proc.pid
+            o.folder = folder
+            o.file = file
+            o.clientId = clientId
+            o.process = proc
+            o.configuration = s
+            o.status = 1
+            o.table = itemtemplate.table
+            processes.append(o)
+            print("File "  + file + ", PID : " + str(o.pid))
+            #info = info + o.clientId + ", PID: " + str(o.pid) +"\n"
+            info.append(o)
+        except:
+            print("Fail creating consumer")
+            traceback.print_exc()
+
 
     save_processes_to_file()
     sjson = json.dumps(info, default=obj_dict)
@@ -475,21 +499,26 @@ def restartclient(server, port, group, topic, clientid):
                 print("Already killed")
             remove(processes, item.file)
 
-            print("\nRestarting " + item.file)
-            print("\n\n")
-            proc = subprocess.Popen(["python", "kafka2bq.py", "-f" + item.file])
-            o = lambda: None
-            o.id = item.id.replace("\n",  "")
-            o.pid = proc.pid
-            o.folder = item.folder
-            o.file = item.file
-            o.clientId = item.clientId
-            o.process = proc
-            o.configuration = item.configuration
-            o.status = 1
-            print("New instance PID: " + str(o.pid))
-            processes.append(o)
-            info = o
+            try:
+                print("\nRestarting " + item.file)
+                print("\n\n")
+                proc = subprocess.Popen(["python", "kafka2bq.py", "-f" + item.file])
+                o = lambda: None
+                o.id = item.id.replace("\n",  "")
+                o.pid = proc.pid
+                o.folder = item.folder
+                o.file = item.file
+                o.clientId = item.clientId
+                o.process = proc
+                o.configuration = item.configuration
+                o.status = 1
+                print("New instance PID: " + str(o.pid))
+                processes.append(o)
+                info = o
+            except :
+                print("Fail to restart consumer")
+                traceback.print_exc()
+
             break
 
     save_processes_to_file()
@@ -512,21 +541,26 @@ def restartclientbyid(id, clientid):
 
             remove(processes, item.file)
 
-            print("\nRestarting " + item.file)
-            print("\n\n")
-            proc = subprocess.Popen(["python", "kafka2bq.py", "-f" + item.file])
-            o = lambda: None
-            o.id = item.id.replace("\n",  "")
-            o.pid = proc.pid
-            o.folder = item.folder
-            o.file = item.file
-            o.clientId = item.clientId
-            o.process = proc
-            o.configuration = item.configuration
-            o.status = 1
-            print("New instance PID: " + str(o.pid))
-            processes.append(o)
-            info = o
+            try:
+                print("\nRestarting " + item.file)
+                print("\n\n")
+                proc = subprocess.Popen(["python", "kafka2bq.py", "-f" + item.file])
+                o = lambda: None
+                o.id = item.id.replace("\n",  "")
+                o.pid = proc.pid
+                o.folder = item.folder
+                o.file = item.file
+                o.clientId = item.clientId
+                o.process = proc
+                o.configuration = item.configuration
+                o.status = 1
+                print("New instance PID: " + str(o.pid))
+                processes.append(o)
+                info = o
+            except:
+                print("Fail to create  consumer")
+                traceback.print_exc()
+                
             break
     
     save_processes_to_file()
