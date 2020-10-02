@@ -9,7 +9,7 @@ Read topic from Kafka and insert the data to BigQuery. Using Python Flask.
 ## Run the application
 
 1. Make sure you create the credential to insert BigQuery and download the credential.
-Set the credential to use Google Cloud NLP API: export GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/credential/json/file
+Set the credential to use Google BigQuery : export GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/credential/json/file
 
 
 2. Run the Twitter Analysis Server:
