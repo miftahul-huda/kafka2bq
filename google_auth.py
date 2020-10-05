@@ -14,8 +14,8 @@ AUTHORIZATION_SCOPE ='openid email profile'
 
 AUTH_REDIRECT_URI = "http://localhost:5555/google/auth"
 BASE_URI = "http://localhost:5555/web"
-CLIENT_ID = "656938700735-ab19arv8ib0ojfnraeiah7bh2phcdv4a.apps.googleusercontent.com"
-CLIENT_SECRET = "HDq1qrSgoTq1fYoMd5X1aFfR"
+CLIENT_ID = "<clientid>"
+CLIENT_SECRET = "<clientsecret>"
 
 AUTH_TOKEN_KEY = 'auth_token'
 AUTH_STATE_KEY = 'auth_state'
