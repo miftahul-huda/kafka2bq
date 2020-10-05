@@ -11,12 +11,21 @@ import copy
 from subprocess import PIPE
 from flask import render_template
 import traceback 
-from flask import request, jsonify
+from flask import jsonify
 import time
 import atexit
 
+from authlib.client import OAuth2Session
+import google.oauth2.credentials
+import googleapiclient.discovery
+import functools
+import google_auth
+
+
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
+app.secret_key = "hudabeybi"
+app.register_blueprint(google_auth.app)
 
 host = '0.0.0.0'
 port = 5555
@@ -58,7 +67,7 @@ def convert_to_process(item):
     else:
         ff = o.folder.split("/")
         o.table = ff[1]
-        
+
     o.configuration = item["configuration"]  
     return o 
 
@@ -182,6 +191,15 @@ def parse_folder(folder):
 
     return [host, port, group, topic]
 
+def check_user(email):
+    f  = open("user.logins")
+    lines = f.read()
+    lines = lines.split("\n")
+    for line  in lines:
+        if(line.strip() == email ):
+            return True
+    return False
+
 
 def obj_dict(obj):
     return obj.__dict__
@@ -196,7 +214,15 @@ def helloname(name):
 
 @app.route('/web')
 def static_file():
-    return render_template('index.html')
+    if google_auth.is_logged_in():
+        user_info = google_auth.get_user_info()
+        res =  check_user(user_info["email"])
+        if(res):
+            return render_template('index.html')
+        else:
+            return render_template('login.html')
+    else:
+        return render_template('login.html')
 
 @app.route('/web/new')
 def new():
