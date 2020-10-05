@@ -251,7 +251,7 @@ def start(server, port, group, topic, project, table, num, credential):
         "\n\n#BigQuery  table output "
         "\n-output-bq-table " + table + ""
         "\n\n#Maximum rows to insert "
-        "\n-rows-insert-num " + num + ""
+        "\n-rows-insert-num 1000"
         "\n\n# Kafka consumer settings "
         "\n-bootstrap-server " + server + ":" + port + ""
         "\n-group-id " + group + ""
