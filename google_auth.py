@@ -12,10 +12,10 @@ AUTHORIZATION_URL = 'https://accounts.google.com/o/oauth2/v2/auth?access_type=of
 
 AUTHORIZATION_SCOPE ='openid email profile'
 
-AUTH_REDIRECT_URI = "http://localhost:5555/google/auth"
-BASE_URI = "http://localhost:5555/web"
-CLIENT_ID = "<clientid>"
-CLIENT_SECRET = "<clientsecret>"
+AUTH_REDIRECT_URI = os.environ["BASE_URI"] + "/google/auth"
+BASE_URI = os.environ["BASE_URI"] + "/web"
+CLIENT_ID = os.environ["CLIENT_ID"]
+CLIENT_SECRET = os.environ["CLIENT_SECRET"]
 
 AUTH_TOKEN_KEY = 'auth_token'
 AUTH_STATE_KEY = 'auth_state'
