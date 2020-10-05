@@ -206,7 +206,7 @@ function stopAll() {
   $.get("/kafka2bq/stop/{{ id }}", function(data){
     $(".modal-body").html("All workers have been stopped. ");
     $("#btnClose").on('click',function(){
-        location = "/web";
+        load()
     });
     $("#myModal").modal();
     //

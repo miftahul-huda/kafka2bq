@@ -51,7 +51,14 @@ def convert_to_process(item):
     o.clientId = item["clientId"]
     o.process = None
     o.status = 0
-    o.table = item["table"]
+
+    key = "table"
+    if key in item:
+        o.table = item["table"]
+    else:
+        ff = o.folder.split("/")
+        o.table = ff[1]
+        
     o.configuration = item["configuration"]  
     return o 
 

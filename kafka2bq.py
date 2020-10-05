@@ -123,6 +123,11 @@ class KafkaConsumer:
             )
         return client
 
+    def get_datetime(self):
+        now = datetime.now()
+        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+        return dt_string
+
     def process_to_bq(self, msg, config):
 
         if(msg is not None):
@@ -141,23 +146,26 @@ class KafkaConsumer:
 
     def save(self,  config):
         if(len(self.buffer) > 0):
-            print(config.clientId +  " : Saving to " + config.outputBqTable)
+            stime = self.get_datetime()
+            print(stime + " : " + config.clientId +  " : Saving to " + config.outputBqTable)
             startTime = datetime.now()
             #self.print_all(self.buffer)
             errors = self.save_data(self.buffer, config)
             errors = []
-            print(config.clientId +  " :Total rows  : " + str(len( self.buffer )))
+
+            stime = self.get_datetime()
+            print(stime + " : " + config.clientId +  " :Total rows  : " + str(len( self.buffer )))
 
             if(len(errors) == 0):
                 self.messageCounter = 0
                 self.buffer = []
                 endtime = datetime.now()
-                print(config.clientId +  " : Data has been saved in " + str(endtime - startTime))
+                print(stime +  " : " + config.clientId +  " : Data has been saved in " + str(endtime - startTime))
                 print("\n\n")
             else:
-                print(config.clientId +  " : Error saving to BigQuery")
+                print(stime +  " : " + config.clientId +  " : Error saving to BigQuery")
                 print(errors)
-                print(config.clientId +  " : Waiting for 3 seconds...")
+                print(stime +  " : " + config.clientId +  " : Waiting for 3 seconds...")
                 time.sleep(3)
 
     def print_all(self, arr):
@@ -194,7 +202,7 @@ class KafkaConsumer:
                     continue
                 elif not msg.error():
                     #dt_object = datetime.fromtimestamp(float(msg.timestamp()))
-                    print(config.clientId +  ' : Received message at: {0}'.format(msg.timestamp()))
+                    #print(config.clientId +  ' : Received message at: {0}'.format(msg.timestamp()))
                     #print(msg.value())
                     self.process_to_bq(msg.value(), config)
 
